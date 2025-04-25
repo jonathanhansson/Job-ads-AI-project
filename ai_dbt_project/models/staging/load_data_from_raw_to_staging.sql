@@ -1,0 +1,30 @@
+SELECT
+
+  number_of_vacancies,
+  relevance,
+  application_deadline,
+  headline,
+  description__text,
+  description__text_formatted,
+  employment_type__label,
+  duration__label,
+  salary_description,
+  salary_type__label,
+  scope_of_work__min,
+  scope_of_work__max,
+  occupation__label,
+  occupation_group__label,
+  occupation_field__label,
+  employer__name,
+  employer__workplace,
+  employer__organization_number,
+  workplace_address__street_address,
+  workplace_address__postcode,
+  workplace_address__region,
+  workplace_address__city,
+  workplace_address__country,
+  experience_required,
+  driving_license_required,
+  access_to_own_car
+  
+FROM raw.raw_job_ads__hits
