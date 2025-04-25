@@ -27,7 +27,7 @@ def run_pipeline(occupation_field):
     pipeline =  dlt.pipeline(
         pipeline_name="ads",
         destination="duckdb",
-        dataset_name="staging"
+        dataset_name="raw"
     )
 
     is_running = True
