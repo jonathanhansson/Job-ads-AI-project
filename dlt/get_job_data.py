@@ -2,15 +2,16 @@ import dlt
 import requests
 
 
-@dlt.resource(write_disposition="replace", name="raw_job_ads")
-def load_data_from_api(occupation_field: str):
+@dlt.resource(write_disposition="append", name="raw_job_ads")
+def load_data_from_api(occupation_field: str, offset=0):
     """
     This function loads raw data from the Tech job ads API
     """
     url = f"https://jobsearch.api.jobtechdev.se/search"
     params = {
         "occupation-field": occupation_field,
-        "limit": 100
+        "limit": 100,
+        "offset": offset,
     }
 
     response = requests.get(url, params=params)
@@ -29,9 +30,21 @@ def run_pipeline(occupation_field):
         dataset_name="staging"
     )
 
-    for f in occupation_field:
-        load_info = pipeline.run(load_data_from_api(f))
-        print(load_info)
+    is_running = True
+
+    while is_running:
+        offset = 0
+        try:
+            for f in occupation_field:
+                load_info = pipeline.run(load_data_from_api(f, offset))
+            
+            offset += 100
+
+        except:
+            is_running = False
+    
+    
+    print(load_info)
 
 
 
