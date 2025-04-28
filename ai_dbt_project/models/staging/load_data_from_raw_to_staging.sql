@@ -27,4 +27,5 @@ SELECT
   driving_license_required,
   access_to_own_car
   
-FROM raw.raw_job_ads__hits
+FROM raw.raw_job_ads
+-- Should this be here? When does it change?
