@@ -1,56 +1,63 @@
 import dlt
 import requests
 
-
-@dlt.resource(write_disposition="append", name="raw_job_ads")
-def load_data_from_api(occupation_field: str, offset=0):
+# Fetch one page with a limit of 100 ads
+def fetch_page_api(occupation: str, offset: int):
     """
-    This function loads raw data from the Tech job ads API
+    SRP: This method fetches a page from the API based on occupation and offset
     """
     url = f"https://jobsearch.api.jobtechdev.se/search"
     params = {
-        "occupation-field": occupation_field,
+        "occupation-field": occupation,
         "limit": 100,
         "offset": offset,
     }
-
     response = requests.get(url, params=params)
+    return response
 
-    if response.status_code == 200:
-        data = response.json()
-        yield data
-    
-    else:
-        print("Couldn't fetch data")
+# Dlt Resource objekt method. Paginates until there is no more ads or max API hits 2000.
+@dlt.resource(write_disposition="merge", name="raw_job_ads", primary_key="id")
+def load_data_from_api(occupation_fields: str):
+    """
+    This function loads raw data from the Tech job ads API
+    """
 
-def run_pipeline(occupation_field):
+    for occupation in occupation_fields:
+        offset = 0
+        while True:
+
+            # Calling the function to read one page of 100 ads since its the api LIMIT. With The Occupation and offset as arguments
+            response = fetch_page_api(occupation, offset)
+
+            # If the response is approved and its less then 100 ads, meaning its about to end, then we should yield the last
+            # and then break the loop back to the pipeline
+            if response.status_code == 200:
+                data = response.json()
+                if len(data['hits']) < 100 and len(data['hits'] ) > 0:
+                    yield data["hits"]
+                    break 
+                else:
+                    yield data["hits"]
+
+            else:
+                print(f"Response code: {response.status_code}")
+                break
+            offset += 100
+
+#Initiate the pipeline and running it with the dlt resource method.
+def run_pipeline(occupation_fields):
     pipeline =  dlt.pipeline(
         pipeline_name="ads",
         destination="duckdb",
         dataset_name="raw"
     )
 
-    is_running = True
-
-    while is_running:
-        offset = 0
-        try:
-            for f in occupation_field:
-                load_info = pipeline.run(load_data_from_api(f, offset))
-            
-            offset += 100
-
-        except:
-            is_running = False
-    
-    
+    load_info = pipeline.run(load_data_from_api(occupation_fields))
     print(load_info)
 
 
-
-
 if __name__ == "__main__":
-    occupation_fields = ("X82t_awd_Qyc", "j7Cq_ZJe_GkT", "apaJ_2ja_LuF")
+    occupation_fields = ["X82t_awd_Qyc", "j7Cq_ZJe_GkT", "apaJ_2ja_LuF"]
     run_pipeline(occupation_fields)
     
 
