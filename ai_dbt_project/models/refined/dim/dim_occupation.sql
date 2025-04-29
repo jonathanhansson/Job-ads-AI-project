@@ -4,6 +4,14 @@ WITH base AS (
         occupation_group,
         occupation_field
     FROM {{ ref('load_data_from_raw_to_staging') }}
+),
+
+cleaned_data AS (
+    SELECT
+        TRIM(LOWER(COALESCE(occupation, 'ej angiven'))) AS occupation,
+        TRIM(LOWER(COALESCE(occupation_group, 'ej angiven'))) AS occupation_group,
+        TRIM(LOWER(COALESCE(occupation_field, 'ej angiven'))) AS occupation_field
+    FROM base
 )
 
 SELECT
@@ -13,4 +21,4 @@ SELECT
     occupation,
     occupation_group,
     occupation_field,
-FROM base
+FROM cleaned_data
