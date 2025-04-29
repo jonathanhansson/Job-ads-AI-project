@@ -13,14 +13,14 @@ WITH base AS (
 ),
 cleaned_data AS (
     SELECT
-        LOWER(COALESCE(employer_name, 'ej angiven')) AS employer_name,
-        LOWER(COALESCE(workplace, 'ej angiven')) AS workplace,
-        COALESCE(employer_org_nr, 'ej angiven') AS employer_org_nr,
-        LOWER(COALESCE(street_address, 'ej angiven')) AS street_address,
-        LOWER(COALESCE(postal_code, 'ej angiven')) AS postal_code,     
-        LOWER(COALESCE(region, 'ej angiven')) AS region,
-        LOWER(COALESCE(city, 'ej angiven')) AS city,
-        LOWER(COALESCE(country, 'ej angiven')) AS country
+        TRIM(LOWER(COALESCE(employer_name, 'ej angiven'))) AS employer_name,
+        TRIM(LOWER(COALESCE(workplace, 'ej angiven'))) AS workplace,
+        TRIM(COALESCE(employer_org_nr, 'ej angiven')) AS employer_org_nr,
+        TRIM(LOWER(COALESCE(street_address, 'ej angiven'))) AS street_address,
+        TRIM(LOWER(COALESCE(postal_code, 'ej angiven'))) AS postal_code,     
+        TRIM(LOWER(COALESCE(region, 'ej angiven'))) AS region,
+        TRIM(LOWER(COALESCE(city, 'ej angiven'))) AS city,
+        TRIM(LOWER(COALESCE(country, 'ej angiven'))) AS country
     FROM base
 )
 

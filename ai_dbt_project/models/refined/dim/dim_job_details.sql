@@ -11,13 +11,13 @@ WITH base AS (
 ),
 cleaned_data AS (
   SELECT
-    COALESCE(ad_id, 'ej angiven') AS ad_id,
-    LOWER(COALESCE(headline, 'ej angiven')) AS headline,
-    LOWER(COALESCE(description_text, 'ej angiven')) AS description_text,
-    LOWER(COALESCE(employment_type, 'ej angiven')) AS employment_type,
-    LOWER(COALESCE(duration, 'ej angiven')) AS duration,
-    LOWER(COALESCE(salary_description, 'ej angiven')) AS salary_description,
-    LOWER(COALESCE(salary_type, 'ej angiven')) AS salary_type
+    TRIM(COALESCE(ad_id, 'ej angiven')) AS ad_id,
+    TRIM(LOWER(COALESCE(headline, 'ej angiven'))) AS headline,
+    TRIM(LOWER(COALESCE(description_text, 'ej angiven'))) AS description_text,
+    TRIM(LOWER(COALESCE(employment_type, 'ej angiven'))) AS employment_type,
+    TRIM(LOWER(COALESCE(duration, 'ej angiven'))) AS duration,
+    TRIM(LOWER(COALESCE(salary_description, 'ej angiven'))) AS salary_description,
+    TRIM(LOWER(COALESCE(salary_type, 'ej angiven'))) AS salary_type
   FROM base
 )
 

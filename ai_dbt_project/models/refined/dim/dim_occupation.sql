@@ -8,9 +8,9 @@ WITH base AS (
 
 cleaned_data AS (
     SELECT
-        LOWER(COALESCE(occupation, 'ej angiven')) AS occupation,
-        LOWER(COALESCE(occupation_group, 'ej angiven')) AS occupation_group,
-        LOWER(COALESCE(occupation_field, 'ej angiven')) AS occupation_field
+        TRIM(LOWER(COALESCE(occupation, 'ej angiven'))) AS occupation,
+        TRIM(LOWER(COALESCE(occupation_group, 'ej angiven'))) AS occupation_group,
+        TRIM(LOWER(COALESCE(occupation_field, 'ej angiven'))) AS occupation_field
     FROM base
 )
 
