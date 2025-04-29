@@ -8,6 +8,17 @@ WITH base AS (
     salary_description,
     salary_type,
   FROM {{ ref('load_data_from_raw_to_staging') }}
+),
+cleaned_data AS (
+  SELECT
+    COALESCE(ad_id, 'ej angiven') AS ad_id,
+    LOWER(COALESCE(headline, 'ej angiven')) AS headline,
+    LOWER(COALESCE(description_text, 'ej angiven')) AS description_text,
+    LOWER(COALESCE(employment_type, 'ej angiven')) AS employment_type,
+    LOWER(COALESCE(duration, 'ej angiven')) AS duration,
+    LOWER(COALESCE(salary_description, 'ej angiven')) AS salary_description,
+    LOWER(COALESCE(salary_type, 'ej angiven')) AS salary_type
+  FROM base
 )
 
 SELECT
@@ -21,7 +32,7 @@ SELECT
     duration,
     salary_description,
     salary_type
-FROM base
+FROM cleaned_data
 
 
 

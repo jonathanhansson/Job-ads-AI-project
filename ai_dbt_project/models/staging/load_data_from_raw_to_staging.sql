@@ -1,5 +1,4 @@
 SELECT
-
   _dlt_id AS ad_id,
   number_of_vacancies AS number_vacancies,
   -- relevance, -- INT , Only nr 1 - Why is this relevant?
@@ -26,7 +25,5 @@ SELECT
   workplace_address__country AS country,
   experience_required,
   driving_license_required AS requires_drivers_license,
-  access_to_own_car AS has_car
-
-  
+  access_to_own_car AS has_car 
 FROM raw.raw_job_ads
