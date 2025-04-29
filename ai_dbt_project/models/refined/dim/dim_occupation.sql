@@ -1,5 +1,5 @@
 WITH base AS (
-    SELECT 
+    SELECT DISTINCT
         occupation,
         occupation_group,
         occupation_field

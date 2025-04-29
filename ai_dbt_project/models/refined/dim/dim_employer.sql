@@ -1,5 +1,5 @@
 WITH base AS (
-    SELECT
+    SELECT DISTINCT
         employer_name,
         workplace,
         employer_org_nr,
@@ -7,10 +7,7 @@ WITH base AS (
         postal_code,
         region,
         city,
-        country,
-        experience_required,
-        requires_drivers_license,
-        has_car
+        country
     FROM {{ ref('load_data_from_raw_to_staging') }} 
 )
 
@@ -26,8 +23,5 @@ SELECT
     postal_code,
     region,
     city,
-    country,
-    experience_required,
-    requires_drivers_license,
-    has_car
+    country
 FROM base

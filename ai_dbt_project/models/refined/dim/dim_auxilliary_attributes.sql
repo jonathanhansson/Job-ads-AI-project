@@ -1,5 +1,5 @@
 WITH base AS (
-  SELECT
+  SELECT DISTINCT
     experience_required,
     requires_drivers_license,
     has_car
