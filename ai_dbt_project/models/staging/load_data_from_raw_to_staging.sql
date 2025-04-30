@@ -3,6 +3,7 @@ SELECT
   number_of_vacancies AS number_vacancies,
   -- relevance, -- INT , Only nr 1 - Why is this relevant?
   application_deadline,
+  publication_date,
   headline,
   description__text AS description_text,
   -- description__text_formatted, - Why is this relevant?

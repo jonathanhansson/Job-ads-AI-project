@@ -8,6 +8,7 @@ SELECT
     emp.employer_id,       
     aux.auxilliary_id,      
     stg.number_vacancies,
+    stg.publication_date,
     stg.application_deadline
 FROM stg
 
