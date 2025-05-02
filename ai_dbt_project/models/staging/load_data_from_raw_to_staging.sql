@@ -11,18 +11,21 @@ SELECT
   salary_description,
   salary_type__label AS salary_type,
   -- scope_of_work__min, - Why is this relevant?
-  -- scope_of_work__max, - Why is this relevant? 
+  -- scope_of_work__max, - Why is this relevant?
+
   TRIM(LOWER(COALESCE(occupation__label, 'ej angiven'))) AS occupation,
   TRIM(LOWER(COALESCE(occupation_group__label, 'ej angiven'))) AS occupation_group,
   TRIM(LOWER(COALESCE(occupation_field__label, 'ej angiven'))) AS occupation_field,
-  employer__name AS employer_name,
-  employer__workplace AS workplace,
-  employer__organization_number AS employer_org_nr,
-  workplace_address__street_address AS street_address,
-  workplace_address__postcode AS postal_code,
-  workplace_address__region AS region,
-  workplace_address__city AS city,
-  workplace_address__country AS country,
+  
+  TRIM(LOWER(COALESCE(employer__name, 'ej angiven'))) AS employer_name,
+  TRIM(LOWER(COALESCE(employer__workplace, 'ej angiven'))) AS workplace,
+  TRIM(COALESCE(employer__organization_number, 'ej angiven')) AS employer_org_nr,
+  TRIM(LOWER(COALESCE(workplace_address__street_address, 'ej angiven'))) AS street_address,
+  TRIM(LOWER(COALESCE(workplace_address__postcode, 'ej angiven'))) AS postal_code,     
+  TRIM(LOWER(COALESCE(workplace_address__region, 'ej angiven'))) AS region,
+  TRIM(LOWER(COALESCE(workplace_address__city, 'ej angiven'))) AS city,
+  TRIM(LOWER(COALESCE(workplace_address__country, 'ej angiven'))) AS country,
+
   experience_required,
   driving_license_required AS requires_drivers_license,
   access_to_own_car AS has_car 
