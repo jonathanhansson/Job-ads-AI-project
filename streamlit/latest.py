@@ -51,6 +51,7 @@ with col2:
         index=1
     )
 
+# Detta mappar start_date/end_date ovan med {start_date}/{end_date} i de olika .sql-filerna
 with get_connection() as con:
     q_job = q_job_raw.format(start_date=start_date, end_date=end_date)
     q_group = q_group_raw.format(start_date=start_date, end_date=end_date)
