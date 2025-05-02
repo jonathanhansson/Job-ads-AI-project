@@ -11,10 +11,10 @@ SELECT
   salary_description,
   salary_type__label AS salary_type,
   -- scope_of_work__min, - Why is this relevant?
-  -- scope_of_work__max, - Why is this relevant?
-  occupation__label AS occupation,
-  occupation_group__label AS occupation_group,
-  occupation_field__label AS occupation_field,
+  -- scope_of_work__max, - Why is this relevant? 
+  TRIM(LOWER(COALESCE(occupation__label, 'ej angiven'))) AS occupation,
+  TRIM(LOWER(COALESCE(occupation_group__label, 'ej angiven'))) AS occupation_group,
+  TRIM(LOWER(COALESCE(occupation_field__label, 'ej angiven'))) AS occupation_field,
   employer__name AS employer_name,
   employer__workplace AS workplace,
   employer__organization_number AS employer_org_nr,
