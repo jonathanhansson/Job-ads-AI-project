@@ -1,0 +1,1 @@
+# This file is empty but will display LLM insights on skills required on the job market
