@@ -1,7 +1,7 @@
 # app.py
 
 import streamlit as st
-from views.top_jobs import top_jobs_view
+from app_pages.top_jobs import top_jobs_view
 
 st.set_page_config(layout="wide")
 
