@@ -1,10 +1,11 @@
+--trends_chosen.sql
 SELECT
-    fj.publication_date,
+    CAST(fj.publication_date AS DATE) AS publication_day,
     oc.{{ category_col }} AS TargetGroup, -- ocupation
-    COUNT(*) AS Vacancies
+    SUM(number_vacancies) AS Vacancies
 FROM refined.fct_jobs AS fj
 JOIN refined.dim_occupation oc ON fj.occupation_id = oc.occupation_id
-WHERE fj.publication_date BETWEEN ? AND ?
+WHERE CAST(fj.publication_date AS DATE) BETWEEN ? AND ?
 AND oc.{{ category_col }} IN ( {{ placeholders }} )
-GROUP BY fj.publication_date, TargetGroup
-ORDER BY fj.publication_date
+GROUP BY publication_day, TargetGroup
+ORDER BY publication_day
