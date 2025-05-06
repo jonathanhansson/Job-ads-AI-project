@@ -13,39 +13,35 @@ def top_jobs_view():
 
     st.title("🔥 HR Dashboard – För att hitta enkelt era områden ni ska lägga resurser på!")
 
-    today = date.today()
-
     col1,col2,col3,col4,col5 = st.columns(5)
     with col1:
-        # Filter: välj tidsspann
+        # Filter: choose timespan
         filter_val = st.selectbox(
             "Välj tidsintervall:",
             ["Senaste dagen", "Senaste veckan", "Senaste 2 veckorna", "Senaste 30 dagarna", "Ange själv"],
-            index=1 # Lastest week as DEAFULT index 1
+            index=1 # Standard choice "Senaste veckan"
         )
 
+
     today = date.today()
-    if filter_val == "Senaste dagen":
-        start_date = today - timedelta(days=1)
-        end_date = today
-    elif filter_val == "Senaste veckan":
-        start_date = today - timedelta(weeks=1)
-        end_date = today
-    elif filter_val == "Senaste 2 veckorna":
-        start_date = today - timedelta(weeks=2)
-        end_date = today
-    elif filter_val == "Senaste 30 dagarna":
-        start_date = today - timedelta(days=30)
-        end_date = today
-    else:
-        col_a, col_b = st.columns(2)
-        with col_a:
-            start_date = st.date_input("Från:")
-        with col_b:
-            end_date = st.date_input("Till:")
+
+    # Map the choice to dict delta_map"
+    delta_map = {
+        "Senaste dagen": timedelta(days=1),
+        "Senaste veckan": timedelta(weeks=1),
+        "Senaste 2 veckorna": timedelta(weeks=2),
+        "Senaste 30 dagarna": timedelta(days=30)
+    }
+
+    # One ternary for both varibles
+    start_date, end_date = (
+        (today - delta_map[filter_val], today)
+        if filter_val in delta_map
+        else (st.date_input("Från:"), st.date_input("Till:"))
+    )
 
     with col2:
-        # Filter: Välj filtrering på Yrke, Yrkesgrupp, Sector. (DEFAULT Ska vara inom Yrkesgrupp)
+        # Filter: Choose filter on occupation group, standard is "yrkesgrupp"
         filter_occupation = st.selectbox(
             "Välj yrke, yrkesgrupp eller sektor:",
             ["Yrke", "Yrkesgrupp", "Sektor"],
@@ -53,30 +49,32 @@ def top_jobs_view():
         )
 
     category_col = CATEGORY_MAP[filter_occupation]
-    # Skapar en occupation query för top 5 hetast inom vald catogory_col
+    # Create a occupation_sql variabel rendered based on filter above containing SQL code as string
     occupation_sql = render_sql("occupation", category_col=category_col)
 
     with get_connection() as con:
-        df_occupation = run_query(con, occupation_sql, params=[start_date, end_date])
-        # Baserat på filter occupation, skapa en dataframe för trender för dessa top 3-5 hetaste category_col
+        df_occupation = run_query(con, occupation_sql, params=[start_date, end_date]) # running occupation_sql query to ads.duckdb with two parameters.
         top_target_groups = df_occupation["TargetGroup"].tolist() 
-        placeholders = ", ".join(["?"] * len(top_target_groups))
-        trends_chosen_sql = render_sql("trends_chosen", category_col=category_col, placeholders=placeholders)
-        params = [start_date, end_date] + top_target_groups
-        df_trends = run_query(con, trends_chosen_sql, params=params)
+        placeholders = ", ".join(["?"] * len(top_target_groups))  # Creating number of placeholder for next sql file to be rewritten either 3 or 5 "?" 
+        trends_chosen_sql = render_sql("trends_chosen", category_col=category_col, placeholders=placeholders) # Rendering it with "?"
+        params = [start_date, end_date] + top_target_groups # adding the current top target groups as params to the sql query
+        df_trends = run_query(con, trends_chosen_sql, params=params) # running the query towards duckdb
+        df_trends["publication_day"] = pd.to_datetime(df_trends["publication_day"]).dt.date
 
 
-    total_vacancies = df_occupation["Vacancies"].sum()
-    df_occupation["Andel (%)"] = (df_occupation["Vacancies"] / total_vacancies * 100).round(1).astype(str) + "%"
+    total_vacancies = df_occupation["Vacancies"].sum() # taking the sum of all the vaccancies and storing it in a varibel, 
+    df_occupation["Andel (%)"] = (df_occupation["Vacancies"] / total_vacancies * 100).round(1).astype(str) + "%" # do the math, round it up and convert to string add "%"
+    # Add line breaks to long occupation titles in 'TargetGroup' for better display in graphs.
     df_occupation["TargetGroup_wrapped"] = df_occupation["TargetGroup"].apply(
         lambda s: s if len(s) <= 30 else s[:s[:45].rfind(" ")] + "<br>" + s[s[:45].rfind(" ") + 1:]
     )
 
-    st.subheader(f"Top 5 hetast inom '{filter_occupation}' just nu")
 
     col1,col2 = st.columns(2)  
 
+    # First graph to the LEFT
     with col1:
+        st.subheader(f"Top 5 hetast inom '{filter_occupation}' just nu")
         fig = px.bar(
             df_occupation,
             x="Vacancies",
@@ -122,46 +120,48 @@ def top_jobs_view():
 
         st.plotly_chart(fig, use_container_width=True)
     
-    df_trends["publication_date"] = pd.to_datetime(df_trends["publication_date"])
-    df_trends["date_only"] = df_trends["publication_date"].dt.date
-    min_date = df_trends["date_only"].min()
-    max_date = df_trends["date_only"].max()
+    # Second graph to the RIGHT
+    with col2:
+        min_date = df_trends["publication_day"].min()
+        max_date = df_trends["publication_day"].max()
+
+        # Increment max_date with one day since it rounds backwards
+        max_date += timedelta(days=1)
+
+        st.subheader(f"Trender för {filter_occupation} ")
+        date_range = st.slider(
+            "Välj ett spann",
+            min_value=min_date,
+            max_value=max_date,
+            value=(min_date, max_date)
+        )
+
+        df_filtered = df_trends[
+            (df_trends["publication_day"] >= date_range[0]) &
+            (df_trends["publication_day"] <= date_range[1])
+        ]
 
 
-    st.subheader(f"Trender för {filter_occupation} ")
-    date_range = st.slider(
-        "Välj ett spann",
-        min_value=min_date,
-        max_value=max_date,
-        value=(min_date, max_date)
-    )
+            # Skapa linjediagram
+        fig = px.line(
+            df_filtered,
+            x="publication_day",
+            y="Vacancies",
+            color="TargetGroup",
+            markers=True,
+            line_shape="linear",
+            title="Daglig utveckling av annonser"
+        )
 
-    df_filtered = df_trends[
-        (df_trends["date_only"] >= date_range[0]) &
-        (df_trends["date_only"] <= date_range[1])
-    ]
+        max_vac = df_filtered["Vacancies"].max()
 
+        fig.update_yaxes(
+            range=[0, max_vac * 1.1],    # 0 till 110 % av max
+            tick0=0,                     # börja tick vid 0
+            dtick=max(1, max_vac // 5)   # ungefär 5 steg
+        )
 
-        # Skapa linjediagram
-    fig = px.line(
-        df_filtered,
-        x="date_only",
-        y="Vacancies",
-        color="TargetGroup",
-        markers=True,
-        line_shape="linear",
-        title="Daglig utveckling av annonser"
-    )
-
-    max_vac = df_filtered["Vacancies"].max()
-
-    fig.update_yaxes(
-        range=[0, max_vac * 1.1],    # 0 till 110 % av max
-        tick0=0,                     # börja tick vid 0
-        dtick=max(1, max_vac // 5)   # ungefär 5 steg
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 
         

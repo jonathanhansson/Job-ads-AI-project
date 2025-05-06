@@ -1,4 +1,4 @@
--- jobs_generic.sql
+-- occupation.sql
 SELECT
     oc.{{ category_col }} AS TargetGroup,
     SUM(fj.number_vacancies) AS Vacancies,
