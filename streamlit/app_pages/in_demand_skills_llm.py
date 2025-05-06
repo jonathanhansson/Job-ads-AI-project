@@ -12,17 +12,27 @@ def get_gemini_insight(job_description):
     api_key = os.getenv("gemini_api_key")
     client = genai.Client(api_key=api_key)
 
-    prompt = f"Skriv ut de tre viktigaste kompetenserna för varje jobb inom denna yrkeskategorin: \n{job_description}"
-
+    prompt = f"""
+    Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {job_description}.
+    Strukturera ditt svar så här:
+    1. Färdighet1
+        Förklaring till varför detta är viktigt
+    2. Färdighet2
+        Förklaring till varför detta är viktigt
+    3. Färdighet3
+        Förklaring till varför detta är viktigt
+    4. Färdighet4
+        Förklaring till varför detta är viktigt
+    5. Färdighet5
+        Förklaring till varför detta är viktigt
+    """
+    
     response = client.models.generate_content(
         model="gemini-2.0-flash",
         contents=prompt
     )
 
     return response.text
-    
-    
-
 
 def get_description_text(selected_occupation):
     with get_connection() as con:
@@ -44,6 +54,7 @@ def get_description_text(selected_occupation):
         choices = unique_values["description_text"].to_list()
         cleaned_description = [description.replace("\n", "") for description in choices]
         return cleaned_description
+    
 
 def get_occupations(selected_group):
     with get_connection() as con:
