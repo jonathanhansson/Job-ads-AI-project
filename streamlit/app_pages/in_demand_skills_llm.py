@@ -103,34 +103,31 @@ def get_occupation_fields():
         return choices
 
 def display_llm_competence_insight():
+    st.button("INFO", help="Du väljer jobbfält, jobbgrupp och jobb - vi ger di topp fem viktigaste egenskaperna för jobbet.")
+    st.markdown("<h1>Kompetensinsikter med Gemini API</h1>", unsafe_allow_html=True)
     occupation_fields = ["data/it", "administration, ekonomi, juridik", "bygg och anläggning"]
+    selected_occupation = None   # ← initiera här
 
     col1, col2 = st.columns(2)
 
     with col1:
-        # Välj yrkesfält
-        selected_field = st.selectbox("Välj yrkesfält: ", occupation_fields)
         
-        # Hämta yrkesgrupper baserat på valt yrkesfält
-        choices_group = get_occupation_groups(selected_field)
-        selected_group = st.selectbox("Välj yrkesgrupp: ", choices_group)
+        selected_field = st.selectbox("Välj yrkesfält:", options=[""] + occupation_fields)
+        if selected_field:
+            choices_group = get_occupation_groups(selected_field)
+            selected_group = st.selectbox("Välj yrkesgrupp:", options=[""] + choices_group)
+            if selected_group:
+                choices_occupation = get_occupations(selected_group)
+                selected_occupation = st.selectbox("Välj yrke:", options=[""] + choices_occupation)
 
-        # Hämta yrken baserat på vald yrkesgrupp
-        choices_occupation = get_occupations(selected_group)
-        selected_occupation = st.selectbox("Välj yrke: ", choices_occupation)
-
-        desc = get_description_text(selected_occupation)
-        
-        # Visa den valda informationen för kontroll
-        st.write(f"Valt yrke: {selected_occupation}")
-    
     with col2:
-        st.write(f"Alla jobb inom {selected_occupation}")
+        if selected_occupation:
+            st.write(f"Alla jobb inom {selected_occupation}")
+            desc = get_description_text(selected_occupation)
+            gemini_insight = get_gemini_insight(desc)
+            st.write(gemini_insight)
 
-        desc = get_description_text(selected_occupation)
-        gemini_insight = get_gemini_insight(desc)
-        st.write(gemini_insight)
-        
+            
 
 
         
