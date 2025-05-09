@@ -9,7 +9,7 @@ st.set_page_config(layout="wide")
 
 page = st.sidebar.radio("Välj vy:", [
     "Hetaste jobben just nu",
-    "Regioner med flest jobb TOMT JUST NU",
+    "Regioner med flest jobb",
     "Anställningstyper & trender TOMT JUST NU",
     "Kompetensinsikter med Gemini"
 ])
