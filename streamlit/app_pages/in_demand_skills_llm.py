@@ -103,7 +103,7 @@ def get_occupation_fields():
         return choices
 
 def display_llm_competence_insight():
-    st.button("INFO", help="Du väljer jobbfält, jobbgrupp och jobb - vi ger di topp fem viktigaste egenskaperna för jobbet.")
+    st.button("INFO", help="Du väljer jobbfält, jobbgrupp och jobb - vi ger dig topp fem viktigaste egenskaperna för jobbet.")
     st.markdown("<h1>Kompetensinsikter med Gemini API</h1>", unsafe_allow_html=True)
     occupation_fields = ["data/it", "administration, ekonomi, juridik", "bygg och anläggning"]
     selected_occupation = None   # ← initiera här
