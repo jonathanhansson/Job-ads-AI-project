@@ -18,12 +18,22 @@ def get_regions():
         date_start = date(2025, 4, 25)
         date_end = date.today()
 
-        start_date, end_date = st.date_input(
+        date_range = st.date_input(
             "Välj datumintervall: ",
             value=(date_start, date_end),
             min_value=date(2025, 4, 25),
             max_value=date.today()
         )
+
+        if isinstance(date_range, tuple):
+            if len(date_range) == 2:
+                start, end = date_range
+            elif len(date_range) == 1:
+                start = end = date_range[0]
+            else:
+                start, end = date_start, date_end
+        else:
+            start = end = date_range
 
         with get_connection() as con:
             if sorting_choice == "Stigande":
@@ -31,7 +41,7 @@ def get_regions():
             else:
                 query = render_sql("region", order_style=order_style[1])
 
-            df = run_query(con, query, params=[start_date, end_date])
+            df = run_query(con, query, params=[start, end])
         
         # filtrerar bort "ej angiven"
         df = df[df["region"] != "ej angiven"]
