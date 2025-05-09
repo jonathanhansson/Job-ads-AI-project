@@ -7,24 +7,25 @@ import os
 
 
 
-def get_gemini_insight(job_description):
+def get_gemini_insight(occupation_group):
     load_dotenv()
     api_key = os.getenv("gemini_api_key")
     client = genai.Client(api_key=api_key)
 
     prompt = f"""
-    Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {job_description}.
+    Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {occupation_group}.
     Strukturera ditt svar så här:
-    1. Färdighet1
-        Förklaring till varför detta är viktigt
-    2. Färdighet2
-        Förklaring till varför detta är viktigt
-    3. Färdighet3
-        Förklaring till varför detta är viktigt
-    4. Färdighet4
-        Förklaring till varför detta är viktigt
-    5. Färdighet5
-        Förklaring till varför detta är viktigt
+
+    - Dessa färdigheter är viktiga som {occupation_group}
+    - Insikterna är AI-genererade
+
+    1. Färdighet1 - Förklaring till varför detta är viktigt
+    2. Färdighet2 - Förklaring till varför detta är viktigt
+    3. Färdighet3 - Förklaring till varför detta är viktigt
+    4. Färdighet4 - Förklaring till varför detta är viktigt
+    5. Färdighet5 - Förklaring till varför detta är viktigt
+
+    Skriv inte ut ordagrant FÖRKLARING TILL VARFÖR DETTA ÄR VIKTIGT, skriv bara förklaringen. Fetmarkera färdigheten.
     """
     
     response = client.models.generate_content(
@@ -34,11 +35,11 @@ def get_gemini_insight(job_description):
 
     return response.text
 
-def get_description_text(selected_occupation):
+def get_description_text(selected_group):
     with get_connection() as con:
         q = f"""
         SELECT DISTINCT
-            occupation, description_text
+            occupation_group, description_text
         FROM
             refined.dim_occupation
         JOIN 
@@ -50,7 +51,7 @@ def get_description_text(selected_occupation):
         ORDER BY 
             description_text DESC;
         """
-        unique_values = con.execute(q, [selected_occupation]).fetch_df()
+        unique_values = con.execute(q, [selected_group]).fetch_df()
         choices = unique_values["description_text"].to_list()
         cleaned_description = [description.replace("\n", "") for description in choices]
         return cleaned_description
@@ -106,7 +107,7 @@ def display_llm_competence_insight():
     st.button("INFO", help="Du väljer jobbfält, jobbgrupp och jobb - vi ger dig topp fem viktigaste egenskaperna för jobbet.")
     st.markdown("<h1>Kompetensinsikter med Gemini API</h1>", unsafe_allow_html=True)
     occupation_fields = ["data/it", "administration, ekonomi, juridik", "bygg och anläggning"]
-    selected_occupation = None   # ← initiera här
+    selected_occupation = None
 
     col1, col2 = st.columns(2)
 
@@ -122,9 +123,8 @@ def display_llm_competence_insight():
 
     with col2:
         if selected_occupation:
-            st.write(f"Alla jobb inom {selected_occupation}")
-            desc = get_description_text(selected_occupation)
-            gemini_insight = get_gemini_insight(desc)
+            # desc = get_description_text(selected_group)
+            gemini_insight = get_gemini_insight(selected_group)
             st.write(gemini_insight)
 
             
