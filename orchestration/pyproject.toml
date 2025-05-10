@@ -8,11 +8,10 @@ requires-python = ">=3.9,<3.13"
 dependencies = [
     "dagster",
     "dagster-cloud",
-    "dagster-dbt",
-    "dbt-duckdb<1.10",
-    "dbt-duckdb<1.10",
-    "dbt-duckdb<1.10",
-    "dbt-duckdb<1.10",
+    "dagster-dbt",   
+    "dagster-dlt",
+    "dlt[duckdb]",
+    "dbt-duckdb",
 ]
 
 [project.optional-dependencies]
