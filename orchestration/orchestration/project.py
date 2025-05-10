@@ -1,4 +1,4 @@
-# orchestration/orchestration/project.py
+# job-ads-ai-project/orchestration/orchestration/project.py
 from pathlib import Path
 from dagster_dbt import DbtProject
 
