@@ -6,17 +6,18 @@ from dotenv import load_dotenv
 import os
 
 
-
-def get_gemini_insight(occupation_group):
+# Den här funktionen är ansvarig för att hämta insights från Geminis API baserat på argumentet "occupation"
+# Den returnerar sedan hela svaret
+def get_gemini_insight(occupation):
     load_dotenv()
     api_key = os.getenv("gemini_api_key")
     client = genai.Client(api_key=api_key)
 
     prompt = f"""
-    Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {occupation_group}.
+    Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {occupation}.
     Strukturera ditt svar så här, inget annat:
 
-    - Dessa färdigheter är viktiga som {occupation_group}
+    - Dessa färdigheter är viktiga som {occupation}
 
     1. Färdighet1 - Förklaring till varför detta är viktigt
     2. Färdighet2 - Förklaring till varför detta är viktigt
@@ -34,6 +35,7 @@ def get_gemini_insight(occupation_group):
 
     return response.text
 
+# Här hämtar vi den description text som varje arbetsgivare har skrivit in när de lagt ut jobbet på arbetsförmedlingen
 def get_description_text(selected_group):
     with get_connection() as con:
         q = f"""
@@ -56,6 +58,7 @@ def get_description_text(selected_group):
         return cleaned_description
     
 
+# Självförklarande funktion
 def get_occupations(selected_group):
     with get_connection() as con:
         q = f"""
@@ -72,6 +75,7 @@ def get_occupations(selected_group):
         choices = unique_values["occupation"].to_list()
         return choices
     
+# Självförklarande funktion
 def get_occupation_groups(selected_field):
     with get_connection() as con:
         q = f"""
@@ -87,7 +91,8 @@ def get_occupation_groups(selected_field):
         unique_values = con.execute(q, [selected_field]).fetch_df()
         choices = unique_values["occupation_group"].to_list()
         return choices
-    
+
+# Självförklarande funktion
 def get_occupation_fields():
     with get_connection() as con:
         q = """
@@ -102,6 +107,7 @@ def get_occupation_fields():
         choices = unique_values["occupation_field"].to_list()
         return choices
 
+# This wraps everything up and displays the insights
 def display_llm_competence_insight():
     st.button("INFO", help="Du väljer jobbfält, jobbgrupp och jobb - vi ger dig topp fem viktigaste egenskaperna för jobbet.")
     st.markdown("<h1>Kompetensinsikter med Gemini API</h1>", unsafe_allow_html=True)
