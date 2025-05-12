@@ -25,6 +25,7 @@ def get_regions():
             max_value=date.today()
         )
 
+        # Vår date_input förväntar sig en tuple. Därför gör vi en check för att se längden på användarens svar (att den valt två stycken datum)
         if isinstance(date_range, tuple):
             if len(date_range) == 2:
                 start, end = date_range
