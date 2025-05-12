@@ -1,4 +1,4 @@
-# orchestration/orchestration/schedules.py
+# job-ads-ai-project/orchestration/orchestration/schedules.py
 from dagster import define_asset_job, ScheduleDefinition
 
 daily_job = define_asset_job(
@@ -9,7 +9,7 @@ daily_job = define_asset_job(
 schedules = [
     ScheduleDefinition(
         job=daily_job,
-        cron_schedule="*/3 * * * *",       # TESTAR ATT KÖRA VAR 2 MIN
+        cron_schedule="*/3 * * * *",       # TESTAR ATT KÖRA VAR 3 MIN
         execution_timezone="Europe/Stockholm",
     ),
 ]

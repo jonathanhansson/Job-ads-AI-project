@@ -30,4 +30,4 @@ SELECT
   experience_required,
   driving_license_required AS requires_drivers_license,
   access_to_own_car AS has_car 
-FROM raw.raw_job_ads
+FROM {{ source('job_ads_source', 'raw_job_ads') }}

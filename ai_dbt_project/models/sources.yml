@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: job_ads_source          # ← första argumentet i source()
+    schema: raw                   # DuckDB-schemat där dlt skriver
+    tables:
+      - name: raw_job_ads         # ← andra argumentet i source()
+        meta:
+          dagster:
+            asset_key: ['dlt_job_ads_source_raw_job_ads']   # ← ingen "raw"-prefix här
