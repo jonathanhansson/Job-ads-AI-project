@@ -14,10 +14,9 @@ def get_gemini_insight(occupation_group):
 
     prompt = f"""
     Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {occupation_group}.
-    Strukturera ditt svar så här:
+    Strukturera ditt svar så här, inget annat:
 
     - Dessa färdigheter är viktiga som {occupation_group}
-    - Insikterna är AI-genererade
 
     1. Färdighet1 - Förklaring till varför detta är viktigt
     2. Färdighet2 - Förklaring till varför detta är viktigt
@@ -124,7 +123,7 @@ def display_llm_competence_insight():
     with col2:
         if selected_occupation:
             # desc = get_description_text(selected_group)
-            gemini_insight = get_gemini_insight(selected_group)
+            gemini_insight = get_gemini_insight(selected_occupation)
             st.write(gemini_insight)
 
             
