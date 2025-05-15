@@ -1,5 +1,6 @@
+--fct_jobs.sql
 WITH stg AS (
-    SELECT * FROM {{ ref('load_data_from_raw_to_staging') }}
+    SELECT * FROM {{ ref('stg_job_ads') }}
 )
 
 SELECT 
@@ -21,12 +22,13 @@ LEFT JOIN {{ ref('dim_occupation') }} AS occ
 LEFT JOIN {{ ref('dim_job_details') }} AS jd
   ON stg.ad_id = jd.ad_id
 
--- I fct_jobs.sql
 LEFT JOIN {{ ref('dim_employer') }} AS emp
   ON stg.employer_org_nr = emp.employer_org_nr -- Matchar nyckel 1
- AND stg.street_address = emp.street_address -- Matchar nyckel 2
+ AND stg.municipality = emp.municipality -- Matchar nyckel 2
 
 LEFT JOIN {{ ref('dim_auxilliary_attributes') }} AS aux
   ON stg.experience_required = aux.experience_required
  AND stg.requires_drivers_license = aux.requires_drivers_license
  AND stg.has_car = aux.has_car
+
+WHERE emp.employer_id IS NOT NULL

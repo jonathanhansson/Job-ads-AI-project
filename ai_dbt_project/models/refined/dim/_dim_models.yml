@@ -1,31 +1,76 @@
+# _dim_models.yml
+version: 2
+
 models:
   - name: dim_occupation
-    description: "Dim-table with job info"
+    description: "Dim-table with job-related information"
     columns:
       - name: occupation_id
-        description: "UNIQUE ID/NOT NULL FOR OCCUPATION ID"
+        description: "Surrogate key generated from occupation + group + field"
         tests: [not_null, unique]
+      - name: occupation
+        description: "Specific job title or role"
+        tests: [not_null]
+      - name: occupation_group
+        description: "Broader job category"
+        tests: [not_null]
+      - name: occupation_field
+        description: "Top-level occupational field (e.g. IT, health)"
+        tests: [not_null]
 
   - name: dim_employer
-    description: "Dim-table with employer info"
+    description: "Dim-table with employer information"
     columns:
       - name: employer_id
-        description: "UNIQUE ID/NOT NULL FOR EMPLOYER ID"
+        description: "Surrogate key from org number and municipality"
         tests: [not_null, unique]
+      - name: employer_name
+        description: "Company or organization name"
+        tests: [not_null]
+      - name: workplace
+        description: "Workplace location name"
+        tests: [not_null]
+      - name: employer_org_nr
+        description: "Organization number"
+        tests: [not_null]
+      - name: municipality
+        description: "Municipality where job is located"
+        tests: [not_null]
+      - name: region
+        description: "Region where job is located"
+        tests: [not_null]
+      - name: country
+        description: "Country of job location"
+        tests: [not_null]
 
   - name: dim_job_details
-    description: "Dim-table with job-details"
+    description: "Dim-table containing job advertisement content"
     columns:
       - name: job_details_id
-        description: "UNIQUE ID/NOT NULL FOR JOB DETAILS ID"
+        description: "Surrogate key based on job ad ID"
         tests: [not_null, unique]
+      - name: ad_id
+        description: "Original job ad ID"
+        tests: [not_null]
+      - name: headline
+        description: "Headline/title of the job ad"
+        tests: [not_null]
       - name: description_text
-        description: "UNIQUE VALUE/NOT NULL FOR JOB AD DESCRIPTION" 
+        description: "Textual description of the job"
         tests: [not_null]
 
   - name: dim_auxilliary_attributes
-    description: "Dim-table with auxilliary attributes ID"
+    description: "Dim-table with auxiliary attributes like experience and driver's license"
     columns:
       - name: auxilliary_id
-        description: "UNIQUE ID/NOT NULL FOR AUXILLIARY"
+        description: "Surrogate key based on auxiliary job attributes"
         tests: [not_null, unique]
+      - name: experience_required
+        description: "Whether prior experience is required"
+        tests: [not_null]
+      - name: requires_drivers_license
+        description: "Whether a driver's license is required"
+        tests: [not_null]
+      - name: has_car
+        description: "Whether the applicant needs access to a car"
+        tests: [not_null]

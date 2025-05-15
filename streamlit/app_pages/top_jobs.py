@@ -3,6 +3,10 @@ import plotly.express as px
 import streamlit as st
 from st_db_con import get_connection, render_sql, run_query
 import pandas as pd
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
+import os
 
 def top_jobs_view():
     CATEGORY_MAP = {
@@ -69,6 +73,36 @@ def top_jobs_view():
         lambda s: s if len(s) <= 30 else s[:s[:45].rfind(" ")] + "<br>" + s[s[:45].rfind(" ") + 1:]
     )
 
+    # use gemini to analyse each occupation and add info to the hooverdata
+#    load_dotenv()
+#    api_key = os.getenv("gemini_api_key")
+#    client = genai.Client(api_key=api_key)
+#    for index, row in df_occupation.iterrows():
+#        prompt = f"""
+#        Jag vill att du lyfter fram de fem mest värdefulla färdigheterna för detta yrke: {row['TargetGroup']}.
+#        Strukturera ditt svar så här, inget annat:
+#
+#        - Dessa färdigheter är viktiga som {row['TargetGroup']}
+#
+#        1. Färdighet1 
+#        2. Färdighet2 
+#        3. Färdighet3
+#        4. Färdighet4 
+#        5. Färdighet5 
+
+#        """
+#        
+#        response = client.models.generate_content(
+#            model="gemini-2.0-flash",
+#            contents=prompt,
+#            config=types.GenerateContentConfig(
+#                temperature=0.001 # testing the temperature
+#            )
+#        )
+#        
+#        df_occupation.at[index, "Gemini"] = response.text
+
+
 
     col1,col2 = st.columns(2)  
 
@@ -86,7 +120,8 @@ def top_jobs_view():
                 "TargetGroup": filter_occupation,
                 "Vacancies": "Antal lediga jobb",
                 "Industry": "Bransch",
-                "Andel (%)": "Andel av totalen"
+                "Andel (%)": "Andel av totalen",
+               # "Gemini": "Ai analys av yrket"
             },
             text="Vacancies",
             color_discrete_sequence=px.colors.qualitative.Set2,
@@ -94,8 +129,11 @@ def top_jobs_view():
                 "Vacancies": False,
                 "Industry": False,
                 "Andel (%)": True,
-                "TargetGroup": False  
-            }
+                "TargetGroup": False,
+                #"Gemini": False,
+                "TargetGroup_wrapped": False,              
+                }
+                
         )
         fig.update_traces(
             textposition="auto",
@@ -103,7 +141,7 @@ def top_jobs_view():
             marker_line_width=0.5,
             hoverlabel=dict(
                 bgcolor="gray",
-                font_size=20,
+                font_size=16,
                 font_family="Arial"
             )
         )
@@ -163,6 +201,18 @@ def top_jobs_view():
 
         st.plotly_chart(fig, use_container_width=True)
 
+    anlysis_col, tabel_details_col = st.columns([1,4])
+    with anlysis_col:
+        
+        with st.expander("AI-analys av yrkesgrupper"):
+            for index, row in df_occupation.iterrows():
+                st.markdown(f"### {row['TargetGroup']}")
+                #st.markdown(row['Gemini'])
+
+    with tabel_details_col:
+        with st.expander("Detaljerad vy av yrkesgrupper"):
+            st.write(df_occupation)
+            st.write(df_trends)
 
         
 

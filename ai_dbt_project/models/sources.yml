@@ -1,10 +1,12 @@
 version: 2
 
 sources:
-  - name: job_ads_source          # ← första argumentet i source()
-    schema: raw                   # DuckDB-schemat där dlt skriver
+  - name: job_ads_source
+    description: "This is the raw source table created by DLT from the JobTech API."
+    schema: raw
     tables:
-      - name: raw_job_ads         # ← andra argumentet i source()
+      - name: raw_job_ads
+        description: "Raw job ads data fetched from JobTech API via the DLT pipeline. This table includes all the original fields as-is."
         meta:
           dagster:
-            asset_key: ['dlt_job_ads_source_raw_job_ads']   # ← ingen "raw"-prefix här
+            asset_key: ['dlt_job_ads_source_raw_job_ads']
