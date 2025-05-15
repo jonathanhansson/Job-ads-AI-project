@@ -20,7 +20,7 @@ def fetch_page_api(occupation: str, offset: int):
         "occupation-field": occupation,
         "limit": 100,
         "offset": offset,
-        "published-after": 15000 # Everything the lastest 25 hours to ensure overlap
+        "published-after": 360 # Everything the lastest 25 hours to ensure overlap
     }
     response = requests.get(url, params=params)
     return response
