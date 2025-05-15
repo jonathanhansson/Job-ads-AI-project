@@ -1,16 +1,21 @@
+-- dim_occupation.sql
 WITH base AS (
     SELECT DISTINCT
         occupation,
         occupation_group,
         occupation_field
-    FROM {{ ref('load_data_from_raw_to_staging') }}
+    FROM {{ ref('stg_job_ads') }}
 )
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key ([
-        'occupation', 'occupation_group', 'occupation_field'
+    {{ dbt_utils.generate_surrogate_key([
+        'occupation',
+        'occupation_group',
+        'occupation_field'
     ]) }} as occupation_id,
-    occupation,
-    occupation_group,
-    occupation_field,
+
+    {{ clean_and_coalesce('occupation') }} AS occupation,
+    {{ clean_and_coalesce('occupation_group') }} AS occupation_group,
+    {{ clean_and_coalesce('occupation_field') }} AS occupation_field
+
 FROM base
