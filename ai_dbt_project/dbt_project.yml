@@ -32,8 +32,14 @@ clean-targets:         # directories to be removed by `dbt clean`
 models:
   ai_dbt_project:
     staging:
-      +materialized: view
-      +schema: staging
+      job_ads:
+        +schema: staging
+        +materialized: view
+
     refined:
-      +materialized: view
-      +schema: refined
+      dim:
+        +schema: refined
+        +materialized: table
+      fct:
+        +schema: refined
+        +materialized: table

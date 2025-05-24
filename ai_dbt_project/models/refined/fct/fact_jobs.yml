@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: fct_jobs
+    description: "Fact table with job ads joined to dimension tables"
+    columns:
+
+      - name: employer_id
+        description: "FK to dim_employer"
+        tests: [not_null]
+
+      - name: occupation_id
+        description: "FK to dim_occupation"
+        tests: [not_null]
+
+      - name: job_details_id
+        description: "FK to dim_job_details"
+        tests: [not_null]
+
+      - name: auxilliary_id
+        description: "FK to dim_auxilliary_attributes"
+        tests: [not_null]
+
+      - name: publication_date
+        description: "Date when the ad was published"
+        tests: [not_null]
+
+      - name: number_vacancies
+        description: "Number of vacancies in the ad"
+        tests: [not_null]
+      - name: application_deadline
+        description: "Date when the application deadline is"
