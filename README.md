@@ -212,8 +212,8 @@ LLM calls are executed inside **Streamlit** during dashboard rendering; results 
 
 | Name        | Role |
 |-------------|------|
-| Ludvig S.   | Ingestion, Modeling, Dashboard |
-| Jonathan H. | Orchestration, LLM, Docs |
+| Ludvig J.   
+| Jonathan H. 
 
 ---
 
