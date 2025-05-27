@@ -7,8 +7,6 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 # ----------------------------------------------------------------
 
-
-
 from pathlib import Path
 from dagster import AssetExecutionContext, AssetKey
 from dagster_dlt import DagsterDltResource, dlt_assets
@@ -50,6 +48,7 @@ from .project import ai_dbt_project
 
 @dbt_assets(
     manifest=ai_dbt_project.manifest_path,
+    name="dbt_assets",
 
 )
 def ai_dbt_project_dbt_assets(

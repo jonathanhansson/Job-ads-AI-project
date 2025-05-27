@@ -10,11 +10,8 @@ st.set_page_config(layout="wide")
 
 page = st.sidebar.radio("Välj vy:", [
     "Hetaste jobben just nu",
-    "Hetaste arbetsgivarna just nu",
     "Regioner med flest jobb",
-    "Anställningstyper & trender TOMT JUST NU",
     "Kompetensinsikter med Gemini",
-    "APA",
 ])
 
 if page == "Hetaste jobben just nu":
@@ -23,7 +20,4 @@ elif page == "Regioner med flest jobb":
     get_regions()
 elif page == "Kompetensinsikter med Gemini":
     display_llm_competence_insight()
-elif page == "APA":
-    display_skills()
-elif page == "Hetaste arbetsgivarna just nu":
-    top_employers_view()
+
