@@ -180,7 +180,7 @@ def top_jobs_view():
     render_trends_chart(df_trends, filter_occupation)
 
     # Render AI analysis and detailed tables
-    render_analysis_and_table(df_occupation, df_trends)
+    render_analysis_and_table(df_occupation, df_trends, df_top_employers, filter_municipality)
 
 
 
