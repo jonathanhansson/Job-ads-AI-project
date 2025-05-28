@@ -5,6 +5,11 @@ import plotly.express as px
 from datetime import timedelta
 import locale
 from st_db_con import get_connection, render_sql, run_query
+from google import genai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Define a consistent color map for industries
 COLOR_MAP = {
@@ -134,13 +139,52 @@ def render_trends_chart(df_trends, filter_occupation):
     fig.update_yaxes(range=[0, df_filtered["Vacancies"].max() * 1.1])
     st.plotly_chart(fig, use_container_width=True)
 
+# create a function that will take in two dataframes with data df occupation and df trends and municipality as arguments. Geminis instructions are to generate insights based on the data and return a response adapted for a HR agency.
+def gemini_reply(df_occupation, df_trends, df_top_employers, filter_municipality):
+    """
+    Generate AI insights for HR agency based on job data.
+    """
+    # Send the full dataframes as string representations
+    occ_snippet = df_occupation.to_string(index=False)
+    trend_snippet = df_trends.to_string(index=False)
+    emp_snippet = df_top_employers.to_string(index=False)
+
+    prompt = f"""
+    Du är en HR-analytiker som hjälper ett svenskt rekryteringsbolag att prioritera sitt arbete.
+    Din uppgift är att analysera jobbannonser-data för kommunen: {filter_municipality}.
+
+    Projektbeskrivning:
+    Talent acquisition-specialister analyserar jobbannonser för att förstå vilka kandidater de bör kontakta och marknadsföra till arbetsgivare. De vill snabbt få insikter om vilka yrkesgrupper och arbetsgivare som är viktigast att fokusera på, baserat på aktuella annonser.
+
+    Här är sammanfattad data:
+    1. Yrkesgrupper och statistik:\n{occ_snippet}
+    2. Dagliga annonstrender:\n{trend_snippet}
+    3. Arbetsgivare och antal annonser:\n{emp_snippet}
+
+    Analysera datan och identifiera tydliga trender eller förändringar jämfört med tidigare dagar. Lyft fram om någon yrkesgrupp eller arbetsgivare sticker ut, ökar eller minskar i efterfrågan. Ge en kort (max 200 ord) och konkret rekommendation till en talent acquisition-specialist: 
+    - Vilka yrkesgrupper och arbetsgivare bör prioriteras för effektivare kandidatsök denna vecka?
+    - Motivera utifrån både volym och förändring över tid.
+    - Föreslå gärna en konkret åtgärd eller strategi.
+    """
+    client = genai.Client(api_key=os.getenv("gemini_api_key"))
+    resp = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    return resp.text
+
+
+
 # --- Render analysis expander and detailed table ---
-def render_analysis_and_table(df_occupation, df_trends):
-    analysis_col, details_col = st.columns([1, 4])
+def render_analysis_and_table(df_occupation, df_trends, df_top_employers, filter_municipality):
+    analysis_col, details_col = st.columns([1, 2])
     with analysis_col:
-        with st.expander("AI-analys av yrkesgrupper"):
-            for _, row in df_occupation.iterrows():
-                st.markdown(f"### {row['TargetGroup']}")
+        st.write("**OBS!** AI-genererade svar är inte alltid korrekta. Använd dem som en vägledning.")
+        with st.expander(f"AI-analys av yrkesgrupper för {filter_municipality}"):
+            if st.button("Generera AI-analys"):
+                if df_occupation.empty or df_trends.empty:
+                    st.warning("Ingen data tillgänglig för analys.")
+                else:
+                    st.write("Genererar AI-analys, detta kan ta några sekunder...")
+                    response = gemini_reply(df_occupation, df_trends, df_top_employers, filter_municipality)
+                    st.write(response)
     with details_col:
         with st.expander("Detaljerad vy av yrkesgrupper"):
             st.write(df_occupation)
