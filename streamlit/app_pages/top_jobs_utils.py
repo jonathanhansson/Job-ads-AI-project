@@ -8,6 +8,7 @@ from st_db_con import get_connection, render_sql, run_query
 from google import genai
 import os
 from dotenv import load_dotenv
+import numpy as np
 
 load_dotenv()
 
@@ -37,16 +38,40 @@ def select_municipality(df_municipalities, current_filter):
     index = options.index(current_filter) if current_filter in options else 0
     return st.selectbox("Välj kommun:", options, index=index)
 
+# --- Retrive all municipalities and their job vaccancies
+def retrieve_municipalities_vaccancies(start_date, end_date):
+    # ...efter att du hämtat df_occupation...
+    with get_connection() as con:
+        kommun_vacancies_sql = """
+            SELECT
+                em.municipality AS municipality,
+                SUM(fj.number_vacancies) AS Vacancies
+            FROM refined.fct_jobs AS fj
+            JOIN refined.dim_employer em ON fj.employer_id = em.employer_id
+            WHERE fj.publication_date BETWEEN ? AND ?
+            GROUP BY em.municipality
+        """
+        municipalities_vacancies_df = run_query(con, kommun_vacancies_sql, params=[start_date, end_date])
+    
+    return municipalities_vacancies_df
+
 # --- Prepare coordinates dataframe for map ---
-def compute_coords(filter_municipality):
+def compute_coords(filter_municipality, df_municipality_vacancies):
     df_coords = pd.read_csv("../municipalities_lat_lon_clean.csv")
+    df_coords["municipality"] = df_coords["municipality"].str.lower().str.strip()
+    df_municipality_vacancies["municipality"] = df_municipality_vacancies["municipality"].str.lower().str.strip()
+    df_coords = df_coords.merge(
+        df_municipality_vacancies[["municipality", "Vacancies"]],
+        on="municipality",
+        how="left"
+    )
+    df_coords["Vacancies"] = df_coords["Vacancies"].fillna(0)
     df_coords["color"] = df_coords["municipality"].apply(
-        lambda x: [255,0,0] if x == filter_municipality else [0,120,255]
+        lambda x: [255, 0, 0] if x == filter_municipality.lower() else [0, 120, 255]
     )
-    df_coords["radius"] = df_coords["municipality"].apply(
-        lambda x: 8000 if x == filter_municipality else 5000
-    )
+    df_coords["radius"] = df_coords["Vacancies"].apply(lambda x: 1500 + 2000 * np.log1p(x))
     return df_coords
+
 
 # --- Build PyDeck Deck object for map ---
 def build_deck(df_coords):
@@ -87,6 +112,7 @@ def render_map(deck, key="kommun_map"):
     )
     if event and "selection" in event and event["selection"].get("objects", {}).get("kommuner"):
         kommun = event["selection"]["objects"]["kommuner"][0]["municipality"]
+        kommun = kommun.strip().title()  # Ensure title case for matching
         if kommun != st.session_state.get("selected_kommun", "Alla kommuner"):
             st.session_state["selected_kommun"] = kommun
             st.rerun()
@@ -145,7 +171,7 @@ def gemini_reply(df_occupation, df_trends, df_top_employers, filter_municipality
     Generate AI insights for HR agency based on job data.
     """
     # Send the full dataframes as string representations
-    occ_snippet = df_occupation.to_string(index=False)
+    occ_snippet = df_occupation.drop(columns=["job_descriptions"], errors="ignore").to_string(index=False)
     trend_snippet = df_trends.to_string(index=False)
     emp_snippet = df_top_employers.to_string(index=False)
 
@@ -172,6 +198,92 @@ def gemini_reply(df_occupation, df_trends, df_top_employers, filter_municipality
 
 
 
+# Genereate a Dataframe of top skills
+def extract_skills_with_llm(df_occupation):
+    """
+    Extract key skills from job descriptions using Gemini.
+    Returns DataFrame with skills and their importance scores.
+    """
+    if "job_descriptions" not in df_occupation.columns or df_occupation.empty:
+        return pd.DataFrame(columns=["Kompetens", "Efterfrågan"])
+    
+    # Begränsa textmängden för LLM
+    all_descriptions = " ".join(df_occupation["job_descriptions"].tolist())
+    text_sample = all_descriptions[:25000]  # Begränsa för att undvika token limits
+    
+    # Få occupation field för kontext
+    occupation_field = df_occupation["TargetGroup"].iloc[0] if not df_occupation.empty else "okänd bransch"
+    
+    prompt = f"""
+    Du är en expert på kompetensanalys inom HR.
+    
+    Analysera dessa jobbeskrivningar inom {occupation_field} och identifiera de 10 viktigaste
+    kvalifikationerna/kompetenserna/egenskaperna som arbetsgivare söker efter hos kandidater.
+    
+    För varje kompetens, ange ett poängtal (1-100) som representerar hur viktig/efterfrågad den är.
+    
+    Svara i exakt detta JSON-format:
+    {{
+      "skills": [
+        {{"name": "Kompetens1", "score": 85}},
+        {{"name": "Kompetens2", "score": 72}},
+        {{"name": "Kompetens3", "score": 68}}
+      ]
+    }}
+    
+    Inkludera ingenting annat i ditt svar än denna JSON.
+    
+    Här är jobbeskrivningarna att analysera:
+    {text_sample}
+    """
+    
+    client = genai.Client(api_key=os.getenv("gemini_api_key"))
+    resp = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+    
+    import json
+    import re
+    text = resp.text.strip()
+    # Klipp ut JSON mellan första och sista klammer
+    if text.startswith("```"):
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+        if match:
+            text = match.group(0)
+    try:
+        skills_data = json.loads(text)
+        return skills_data
+    except Exception as e:
+        print(f"Error parsing LLM response: {e}")
+        print(f"Raw response: {resp.text}")
+        return {"skills": []}
+
+
+def render_skills_chart(skills_df):
+    """Visualize skills as horizontal bar chart."""
+    if skills_df.empty:
+        st.warning("Inga kompetenser hittades i jobbannonserna.")
+        return
+    
+    # Creat bar chart
+    fig = px.bar(
+        skills_df,
+        x="Efterfrågan", 
+        y="Kompetens",
+        orientation="h",
+        title="Topp 10 efterfrågade kompetenser och kvalifikationer",
+        color="Efterfrågan",
+        color_continuous_scale=px.colors.sequential.Bluered,
+        text="Efterfrågan"
+    )
+    
+    fig.update_traces(textposition="auto", texttemplate="%{x}", marker_line_width=0.5)
+    fig.update_layout(
+        yaxis=dict(categoryorder='total ascending'), 
+        height=500,
+        font=dict(size=14)
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+
 # --- Render analysis expander and detailed table ---
 def render_analysis_and_table(df_occupation, df_trends, df_top_employers, filter_municipality):
     analysis_col, details_col = st.columns([1, 2])
@@ -186,9 +298,23 @@ def render_analysis_and_table(df_occupation, df_trends, df_top_employers, filter
                     response = gemini_reply(df_occupation, df_trends, df_top_employers, filter_municipality)
                     st.write(response)
     with details_col:
-        with st.expander("Detaljerad vy av yrkesgrupper"):
-            st.write(df_occupation)
-            st.write(df_trends)
+        st.write("**OBS!** AI-genererade svar är inte alltid korrekta. Använd dem som en vägledning.")
+        with st.expander("Top skill graph"):
+            if st.button(f"Generera AI-top-skills för {filter_municipality}"):
+                if df_occupation.empty or df_trends.empty:
+                    st.warning("Ingen data tillgänglig för analys.")
+                else:
+                    st.write("Genererar AI-analys, detta kan ta några sekunder...")
+                    dict_competence_score = extract_skills_with_llm(df_occupation)
+                    # Byt namn på kolumnerna direkt här!
+                    df_competence_score = pd.DataFrame(dict_competence_score["skills"]).rename(
+                        columns={"name": "Kompetens", "score": "Efterfrågan"}
+                    )
+                    render_skills_chart(df_competence_score)
+                    st.write(dict_competence_score)
+
+            
+
 
 # --- Fetch top employers based on filters and date range using SQL template ---
 def fetch_top_employers(start_date, end_date, municipality, limit):
