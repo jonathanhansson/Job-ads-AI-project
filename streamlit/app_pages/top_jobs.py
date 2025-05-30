@@ -3,7 +3,7 @@ import streamlit as st
 from st_db_con import get_connection, render_sql, run_query
 import pandas as pd
 import locale
-from app_pages.top_jobs_utils import get_municipality_filter, select_municipality, compute_coords, build_deck, render_map, render_top_jobs_chart, render_trends_chart, render_analysis_and_table, fetch_top_employers, render_top_employers_chart
+from app_pages.top_jobs_utils import get_municipality_filter, select_municipality, compute_coords, build_deck, render_map, render_top_jobs_chart, render_trends_chart, render_analysis_and_table, fetch_top_employers, render_top_employers_chart, retrieve_municipalities_vaccancies
 
 def top_jobs_view():
     CATEGORY_MAP = {
@@ -14,9 +14,8 @@ def top_jobs_view():
 
     st.title("🔥 HR Dashboard – För att hitta enkelt era områden ni ska lägga resurser på!")
 
-    col1,col2,col3,col4,rest_col = st.columns(5)
+    col1, col2, col3, col4, rest_col = st.columns(5)
     with col1:
-        # Filter: choose timespan
         filter_val = st.selectbox(
             "Välj tidsintervall:",
             ["Senaste dagen", "Senaste veckan", "Senaste 2 veckorna", "Senaste 30 dagarna", "Ange själv"],
@@ -49,50 +48,34 @@ def top_jobs_view():
             index=1
         )
 
-    # Fetching all unique municipalities from the database
     with get_connection() as con:
         df_municipalities = run_query(con, """
-                                      SELECT
-                                        DISTINCT
-                                        em.municipality AS municipality
-                                      FROM refined.dim_employer AS em
-                                      order by em.municipality ASC
-                                      """)  
+            SELECT DISTINCT em.municipality AS municipality
+            FROM refined.dim_employer AS em
+            ORDER BY em.municipality ASC
+        """)
 
-
-    # --- Handle municipality selection from map and sync with selectbox ---
-    # Check session state for selected municipality before any data queries
-    if "selected_kommun" in st.session_state:
-        filter_municipality = st.session_state["selected_kommun"]
-    else:
-        filter_municipality = "Alla kommuner"
+    # --- Centralized filter state ---
+    if "selected_kommun" not in st.session_state:
+        st.session_state["selected_kommun"] = "Alla kommuner"
 
     with col3:
-        # set locale to Swedish for sorting
-        try:
-            locale.setlocale(locale.LC_COLLATE, 'sv_SE.UTF-8')
-        except locale.Error:
-            pass  # if locale not supported, just continue without setting it
+        kommuner = ["Alla kommuner"] + df_municipalities["municipality"].tolist()
+        selectbox_index = kommuner.index(st.session_state["selected_kommun"]) if st.session_state["selected_kommun"] in kommuner else 0
+        selected = st.selectbox("Välj kommun:", kommuner, index=selectbox_index)
+        if selected != st.session_state["selected_kommun"]:
+            st.session_state["selected_kommun"] = selected
+            st.rerun()
 
-        df_municipalities = df_municipalities.sort_values(
-            "municipality", key=lambda col: col.map(locale.strxfrm)
-        ).reset_index(drop=True)
-        # Set the selectbox index to match the selected municipality
-        selectbox_index = 0
-        if filter_municipality != "Alla kommuner" and filter_municipality in df_municipalities["municipality"].tolist():
-            selectbox_index = df_municipalities["municipality"].tolist().index(filter_municipality) + 1
-        filter_municipality = st.selectbox(
-            "Välj kommun:",
-            ["Alla kommuner"] + df_municipalities["municipality"].tolist(),
-            index=selectbox_index
-        )
-    
+    # Always use the current value from session state
+    filter_municipality = st.session_state["selected_kommun"]
     category_col = CATEGORY_MAP[filter_occupation]
     # Create a occupation_sql variabel rendered based on filter above containing SQL code as string
-    occupation_sql = render_sql(filename="occupation", 
-                                category_col=category_col, 
-                                municipality=filter_municipality if filter_municipality != "Alla kommuner" else None
-                                    )
+    occupation_sql = render_sql(
+        filename="occupation",
+        category_col=category_col,
+        municipality=filter_municipality if filter_municipality != "Alla kommuner" else None
+    )
 
         
     with get_connection() as con:
@@ -150,18 +133,17 @@ def top_jobs_view():
     with rest_col:
         st.subheader(filter_municipality)
 
-# --- Modular rendering using helper functions ---
-    # Get current municipality filter from session state
-    filter_municipality = get_municipality_filter()
-
-    # Prepare and build map deck
-    df_coords = compute_coords(filter_municipality)
+    # --- Fetch all municipalites and their total vacancies for map ---
+    municipalities_df = retrieve_municipalities_vaccancies(start_date, end_date)
+    df_coords = compute_coords(filter_municipality, municipalities_df)
     deck = build_deck(df_coords)
-
-    # Render map, top jobs chart, and top employers chart side by side
     map_col, bar_col, job_col = st.columns([1, 2, 2])
     with map_col:
         render_map(deck, key="kommun_map_top_jobs")
+
+    # After map: get the (possibly) new value from session state
+    filter_municipality = st.session_state["selected_kommun"]
+
     with bar_col:
         render_top_jobs_chart(df_occupation, filter_occupation, nr_targetgroup)
     with job_col:
